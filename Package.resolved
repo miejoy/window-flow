@@ -1,0 +1,42 @@
+{
+  "originHash" : "ee72d94036adce66c7867bf783e49228eabd50d0d31dee16610f92b16b4311ff",
+  "pins" : [
+    {
+      "identity" : "data-flow",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/miejoy/data-flow.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "ea9f7d31299bbe0c736ce78ad80b2aad43ea0072"
+      }
+    },
+    {
+      "identity" : "logger",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/miejoy/logger.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a9e78cb5a4f0d302e0901287337291ed9ccefaa2"
+      }
+    },
+    {
+      "identity" : "module-monitor",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/miejoy/module-monitor.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "0603c5d1e9fe4918dfd5c96649d81d12a30525f9"
+      }
+    },
+    {
+      "identity" : "view-flow",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/miejoy/view-flow.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "e1f09a641bcd12b2dad5de590296cecc6633a1a2"
+      }
+    }
+  ],
+  "version" : 3
+}
