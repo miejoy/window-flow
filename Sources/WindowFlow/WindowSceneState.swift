@@ -66,7 +66,7 @@ public struct WindowSceneState: FullSceneWithIdSharableState {
         if let parentWindow = sceneInfo.parentWindow {
             parentWindow.addChildWindow(panel, ordered: .above)
         } else {
-            LogFault("WindowSceneState.makeWindow: parentWindow 不存在，NSPanel 无法挂载到父窗口")
+            LogFault("WindowSceneState.makeWindow: parentWindow 不存在，NSPanel 无法挂载到父窗口，请在 AppDelegate 中使用 Store<WindowSceneState>.shared(on:).apply(action: .bindWith(...)) 注册场景信息")
         }
         return panel
         #else
@@ -74,7 +74,7 @@ public struct WindowSceneState: FullSceneWithIdSharableState {
             return UIWindow(windowScene: windowScene)
         }
         if #available(iOS 16.0, *) {
-            LogFault("WindowSceneState.makeWindow: windowScene 不存在，降级使用 UIScreen.main.bounds")
+            LogFault("WindowSceneState.makeWindow: windowScene 不存在，UIWindow 无法关联到场景，请在 SceneDelegate 中使用 Store<WindowSceneState>.shared(on:).apply(action: .bindWith(...)) 注册场景信息")
         }
         return UIWindow(frame: UIScreen.main.bounds)
         #endif
