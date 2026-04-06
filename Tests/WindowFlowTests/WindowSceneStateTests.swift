@@ -9,12 +9,16 @@ import Testing
 import SwiftUI
 import DataFlow
 import ViewFlow
+import Logger
 @testable import WindowFlow
 
 @MainActor
-@Suite
+@Suite(.serialized)
 struct WindowSceneStateTests {
 
+    init() {
+        Logger.shared.throwFault = false
+    }
     @Test
     func initializeWindowSceneState() {
         let state = WindowSceneState(sceneId: .main)

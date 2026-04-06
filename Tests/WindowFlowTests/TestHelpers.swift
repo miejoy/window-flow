@@ -8,6 +8,7 @@
 import SwiftUI
 import DataFlow
 import ViewFlow
+import Logger
 @testable import WindowFlow
 
 struct TestView: View {

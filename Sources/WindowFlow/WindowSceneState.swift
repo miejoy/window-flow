@@ -65,11 +65,16 @@ public struct WindowSceneState: FullSceneWithIdSharableState {
         panel.backgroundColor = .clear
         if let parentWindow = sceneInfo.parentWindow {
             parentWindow.addChildWindow(panel, ordered: .above)
+        } else {
+            LogFault("WindowSceneState.makeWindow: parentWindow 不存在，NSPanel 无法挂载到父窗口")
         }
         return panel
         #else
         if let windowScene = sceneInfo.windowScene {
             return UIWindow(windowScene: windowScene)
+        }
+        if #available(iOS 16.0, *) {
+            LogFault("WindowSceneState.makeWindow: windowScene 不存在，降级使用 UIScreen.main.bounds")
         }
         return UIWindow(frame: UIScreen.main.bounds)
         #endif
@@ -79,6 +84,7 @@ public struct WindowSceneState: FullSceneWithIdSharableState {
         store.registerDefault { state, action in
             switch action {
             case .bindWith(let sceneInfo):
+                LogInfo("WindowSceneState: bind scene \(state.sceneId)")
                 state.sceneInfo = sceneInfo
             case .showViewWithWindowIfNeed(let windowId, let windowModify):
                 if let window = state.viewTypeToWindowMap[windowId] {
@@ -87,6 +93,7 @@ public struct WindowSceneState: FullSceneWithIdSharableState {
                     return
                 }
                 let window = state.makeWindow()
+                LogInfo("WindowSceneState: create window for [\(windowId)]")
                 windowModify(window, state.sceneId)
                 window.isHidden = false
                 state.viewTypeToWindowMap[windowId] = window
@@ -96,6 +103,7 @@ public struct WindowSceneState: FullSceneWithIdSharableState {
                     return
                 }
                 window.isHidden = true
+                LogInfo("WindowSceneState: hide window for [\(windowId)]")
                 // 创建 window 时设置环境变量会持有 window，导致有循环引用，需要在这里解开
                 window.rootViewController = nil
                 #if os(macOS)

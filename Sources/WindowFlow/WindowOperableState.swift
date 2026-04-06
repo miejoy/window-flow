@@ -71,6 +71,7 @@ public extension WindowWithViewOperableState {
 public extension Store where State: WindowOperableState {
     /// 展示对应 Window（如已存在则只取消隐藏）
     nonisolated func showWindowIfNeed() {
+        LogInfo("\(State.self): showWindowIfNeed")
         Store<WindowSceneState>.shared(on: self.sceneId).showViewWithWindowIfNeed(self.windowId, self.state.makeView()) { window in
             window.windowLevel = self.windowLevel
             self.state.modify(window)
@@ -79,6 +80,7 @@ public extension Store where State: WindowOperableState {
     
     /// 隐藏对应 Window（如不存则无操作）
     func hideWindowIfNeed() {
+        LogInfo("\(State.self): hideWindowIfNeed")
         Store<WindowSceneState>.shared(on: self.sceneId).hideWindowOfViewIfNeed(self.windowId)
     }
 }

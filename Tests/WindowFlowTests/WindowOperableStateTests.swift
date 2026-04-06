@@ -9,11 +9,16 @@ import Testing
 import SwiftUI
 import DataFlow
 import ViewFlow
+import Logger
 @testable import WindowFlow
 
 @MainActor
-@Suite
+@Suite(.serialized)
 struct WindowOperableStateTests {
+
+    init() {
+        Logger.shared.throwFault = false
+    }
 
     @Test
     func defaultWindowLevel() {
