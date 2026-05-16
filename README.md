@@ -23,13 +23,14 @@ WindowFlow 是基于 DataFlow 和 ViewFlow 的独立 Window 管理模块，提�
   - `AppWindowLevel`：窗口层级类型（iOS = `UIWindow.Level`，macOS = `NSWindow.Level`）
   - `AppHostingController`：SwiftUI 宿主控制器（iOS = `UIHostingController`，macOS = `NSHostingController`）
   - `WindowSceneInfo`：场景信息（iOS 持有 `UIWindowScene`，macOS 持有父 `NSWindow`）
+  - `WindowHideAnimation`：Window 消失动画枚举（`.none` / `.fadeOut` / `.slideDown` / `.custom`）
 
 - **场景 Window 状态**：
   - `WindowSceneState`：场景的 Window 管理状态，维护 windowId 到 `AppWindow` 的映射
   - `WindowSceneAction`：绑定场景信息、显示/隐藏 Window 的 Action
 
 - **可操作 Window 的状态协议**：
-  - `WindowOperableState`：可操作独立浮动 Window 的状态协议
+  - `WindowOperableState`：可操作独立浮动 Window 的状态协议，支持自定义 `hideAnimation`
   - `WindowWithViewOperableState`：带关联视图类型的 Window 状态协议，自动推导 windowId 和 makeView()
 
 - **环境值扩展**：
@@ -108,6 +109,9 @@ struct ToastState: WindowWithViewOperableState, FullSceneWithIdSharableState {
 
     // 可选：自定义 windowLevel
     var windowLevel: AppWindowLevel { .normal + 1 }
+
+    // 可选：自定义消失动画（默认 .none 直接隐藏）
+    var hideAnimation: WindowHideAnimation { .fadeOut() }
 
     // 可选：自定义 Window 配置（仅 iOS 有效，macOS 在 NSPanel 创建时已配置）
     #if !os(macOS)
