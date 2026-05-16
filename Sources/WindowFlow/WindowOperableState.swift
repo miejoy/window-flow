@@ -20,6 +20,9 @@ public protocol WindowOperableState: SceneWithIdSharableState {
     /// 用于唯一标识该 Window 的 ID
     var windowId: ObjectIdentifier { get }
     
+    /// Window 消失动画方式，默认为 `.none`
+    var hideAnimation: WindowHideAnimation { get }
+    
     /// 构建该 Window 展示的根视图
     @MainActor
     func makeView() -> AnyView
@@ -39,6 +42,10 @@ public protocol WindowWithViewOperableState: WindowOperableState {
 public extension WindowOperableState {
     var windowLevel: AppWindowLevel {
         .normal
+    }
+    
+    var hideAnimation: WindowHideAnimation {
+        .none
     }
     
     @MainActor
@@ -81,7 +88,7 @@ public extension Store where State: WindowOperableState {
     /// 隐藏对应 Window（如不存则无操作）
     func hideWindowIfNeed() {
         LogInfo("\(State.self): hideWindowIfNeed")
-        Store<WindowSceneState>.shared(on: self.sceneId).hideWindowOfViewIfNeed(self.windowId)
+        Store<WindowSceneState>.shared(on: self.sceneId).hideWindowOfViewIfNeed(self.windowId, animation: self.state.hideAnimation)
     }
 }
 

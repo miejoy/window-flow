@@ -17,7 +17,7 @@ public enum WindowSceneAction: Action {
     /// 如不存在则创建并展示一个关联给对应 windowId 的 Window
     case showViewWithWindowIfNeed(ObjectIdentifier, @MainActor @Sendable (AppWindow, SceneId) -> Void)
     /// 如存在则隐藏并销毁对应 windowId 的 Window
-    case hideWindowOfViewIfNeed(ObjectIdentifier)
+    case hideWindowOfViewIfNeed(ObjectIdentifier, WindowHideAnimation)
 }
 
 /// 场景的 Window 管理状态，负责维护 windowId 到 AppWindow 的映射关系。
@@ -97,22 +97,33 @@ public struct WindowSceneState: FullSceneWithIdSharableState {
                 windowModify(window, state.sceneId)
                 window.isHidden = false
                 state.viewTypeToWindowMap[windowId] = window
-            case .hideWindowOfViewIfNeed(let windowId):
+            case .hideWindowOfViewIfNeed(let windowId, let animation):
                 guard let window = state.viewTypeToWindowMap[windowId] else {
                     LogError("Window of [\(windowId)] not exist")
                     return
                 }
-                window.isHidden = true
                 LogInfo("WindowSceneState: hide window for [\(windowId)]")
-                // 创建 window 时设置环境变量会持有 window，导致有循环引用，需要在这里解开
-                window.rootViewController = nil
-                #if os(macOS)
-                state.sceneInfo.parentWindow?.removeChildWindow(window)
-                #else
-                window.windowScene = nil
-                window.resignKey()
-                #endif
                 state.viewTypeToWindowMap.removeValue(forKey: windowId)
+                
+                // 提前取出 parentWindow，避免 cleanup 闭包捕获 inout state
+                #if os(macOS)
+                let parentWindow = state.sceneInfo.parentWindow
+                #endif
+                
+                // 清理函数：隐藏窗口并释放资源
+                let cleanup = { @MainActor in
+                    window.isHidden = true
+                    // 创建 window 时设置环境变量会持有 window，导致有循环引用，需要在这里解开
+                    window.rootViewController = nil
+                    #if os(macOS)
+                    parentWindow?.removeChildWindow(window)
+                    #else
+                    window.windowScene = nil
+                    window.resignKey()
+                    #endif
+                }
+                
+                animation.animate(window, completion: cleanup)
             }
         }
     }
@@ -200,18 +211,26 @@ public extension Store where State == WindowSceneState {
     /// - Parameter viewType: 视图类型
     nonisolated func hideWindowOfViewIfNeed<V: View>(_ viewType: V.Type) {
         let windowId = ObjectIdentifier(viewType)
-        hideWindowOfViewIfNeed(windowId)
+        hideWindowOfViewIfNeed(windowId, animation: .none)
     }
     
     /// 隐藏并销毁指定 windowId 对应的 Window
     /// - Parameter windowId: 唯一标识该 Window 的 ID
     nonisolated func hideWindowOfViewIfNeed(_ windowId: ObjectIdentifier) {
+        hideWindowOfViewIfNeed(windowId, animation: .none)
+    }
+    
+    /// 隐藏并销毁指定 windowId 对应的 Window
+    /// - Parameters:
+    ///   - windowId: 唯一标识该 Window 的 ID
+    ///   - animation: 消失动画方式
+    nonisolated func hideWindowOfViewIfNeed(_ windowId: ObjectIdentifier, animation: WindowHideAnimation) {
         if Thread.isMainThread {
             MainActor.assumeIsolated {
-                self.apply(action: .hideWindowOfViewIfNeed(windowId))
+                self.apply(action: .hideWindowOfViewIfNeed(windowId, animation))
             }
         } else {
-            self.dispatch(action: .hideWindowOfViewIfNeed(windowId))
+            self.dispatch(action: .hideWindowOfViewIfNeed(windowId, animation))
         }
     }
 }

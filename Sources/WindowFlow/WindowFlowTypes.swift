@@ -98,3 +98,69 @@ public struct WindowSceneInfo: @unchecked Sendable {
 }
 
 #endif
+
+// MARK: - WindowHideAnimation
+
+/// Window 消失动画方式
+public enum WindowHideAnimation: @unchecked Sendable {
+    /// 直接隐藏，无动画（默认行为）
+    case none
+    /// 淡出动画
+    case fadeOut(duration: TimeInterval = 0.25)
+    /// 向下滑出动画
+    case slideDown(duration: TimeInterval = 0.25)
+    /// 自定义动画，执行完毕后必须调用 `completion` 回调触发清理
+    case custom(@MainActor (AppWindow, @escaping @MainActor () -> Void) -> Void)
+    
+    /// 执行动画，动画完成后调用 `completion`
+    @MainActor
+    public func animate(_ window: AppWindow, completion: @escaping @MainActor () -> Void) {
+        switch self {
+        case .none:
+            completion()
+        case .fadeOut(let duration):
+            #if os(macOS)
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = duration
+                window.animator().alphaValue = 0
+            }, completionHandler: {
+                MainActor.assumeIsolated {
+                    completion()
+                    window.alphaValue = 1
+                }
+            })
+            #else
+            UIView.animate(withDuration: duration, animations: {
+                window.alpha = 0
+            }, completion: { _ in
+                completion()
+                window.alpha = 1
+            })
+            #endif
+        case .slideDown(let duration):
+            #if os(macOS)
+            let originalFrame = window.frame
+            let targetFrame = NSRect(x: originalFrame.origin.x, y: originalFrame.origin.y - originalFrame.height, width: originalFrame.width, height: originalFrame.height)
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = duration
+                window.animator().setFrame(targetFrame, display: true)
+            }, completionHandler: {
+                MainActor.assumeIsolated {
+                    completion()
+                    window.setFrame(originalFrame, display: false)
+                }
+            })
+            #else
+            let originalTransform = window.transform
+            UIView.animate(withDuration: duration, animations: {
+                window.transform = originalTransform.translatedBy(x: 0, y: window.bounds.height)
+            }, completion: { _ in
+                completion()
+                window.transform = originalTransform
+            })
+            #endif
+        case .custom(let animator):
+            animator(window, completion)
+        }
+    }
+}
